@@ -1,1 +1,4 @@
 /.DS_Store
+
+Backend/.env
+Backend/AuthService/.env
