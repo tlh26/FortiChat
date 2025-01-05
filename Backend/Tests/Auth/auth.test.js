@@ -1,14 +1,17 @@
-//const auth = require('../../AuthService/src/auth.controller')
+// const auth = require('../../AuthService/src/auth.controller')
 
 const request = require('supertest');
-const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const bcrypt = require('bcrypt');
 const app = require('../../index'); // Your main server entry point
 const { createUser, findUserByEmail } = require('../../Models/userModel');
 const pool = require('../../AuthService/src/config/db');
 
 // Mock the database interactions
 jest.mock('../../Models/userModel');
+
+// Load test environment variables
+require('dotenv').config({ path: '.env.test' });
 
 describe('Auth Service Tests', () => {
     // Mock data
@@ -18,8 +21,20 @@ describe('Auth Service Tests', () => {
     const weakPassword = '12345';
     const hashedPassword = bcrypt.hashSync(strongPassword, 10);
 
-    beforeEach(() => {
+    beforeEach(async () => {
+        // Start a transaction for each test
+        await pool.query('BEGIN');
         jest.clearAllMocks();
+    });
+
+    afterEach(async () => {
+        // Rollback the transaction to ensure a clean slate
+        await pool.query('ROLLBACK');
+    });
+
+    afterAll(async () => {
+        // Close the database pool
+        await pool.end();
     });
 
     /** USER REGISTRATION TESTS **/
