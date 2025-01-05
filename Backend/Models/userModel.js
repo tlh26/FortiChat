@@ -1,3 +1,5 @@
+const pool = require('../AuthService/src/config/db');
+
 const createUser = async (email, encryptedPassword, iv) => {
     const result = await pool.query(
         'INSERT INTO users (email, password, password_iv) VALUES ($1, $2, $3) RETURNING *',

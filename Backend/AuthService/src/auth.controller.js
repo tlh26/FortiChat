@@ -1,7 +1,8 @@
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
-const { createUser, findUserByEmail } = require('Backend/Models/userModel.js');
+const { createUser, findUserByEmail } = require('../../Models/userModel');
+const { validateEmail, validatePasswordStrength } = require('../../utils/validation'); // Add validation utils
 
 // Encryption key for AES-256-CBC
 const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY; // Must be 32 characters (256 bits)
@@ -23,9 +24,27 @@ const decryptData = (encryptedData, iv) => {
 };
 
 // Register User
+// Register User
 const registerUser = async (req, res) => {
     const { email, password } = req.body;
+
+    // Validate email format
+    if (!validateEmail(email)) {
+        return res.status(400).json({ error: 'Invalid email format' });
+    }
+
+    // Validate password strength
+    if (!validatePasswordStrength(password)) {
+        return res.status(400).json({ error: 'Password is too weak' });
+    }
+
     try {
+        // Check if user already exists
+        const existingUser = await findUserByEmail(email);
+        if (existingUser) {
+            return res.status(400).json({ error: 'Email already in use' });
+        }
+
         // Hash and salt the password
         const hashedPassword = await bcrypt.hash(password, 10);
 
@@ -47,6 +66,7 @@ const registerUser = async (req, res) => {
 // Login User
 const loginUser = async (req, res) => {
     const { email, password } = req.body;
+
     try {
         // Find the user by email
         const user = await findUserByEmail(email);
