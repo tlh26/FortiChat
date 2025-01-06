@@ -1,8 +1,9 @@
-const bcrypt = require('bcryptjs');
+const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const { createUser, findUserByEmail } = require('../../Models/userModel');
 const { validateEmail, validatePasswordStrength } = require('../../utils/validation'); // Add validation utils
+const pool = require('../../AuthService/src/config/db'); // Import the database pool
 
 // Encryption key for AES-256-CBC
 const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY; // Must be 32 characters (256 bits)
@@ -91,4 +92,16 @@ const loginUser = async (req, res) => {
     }
 };
 
-module.exports = { registerUser, loginUser };
+// Fetch all users
+const fetchAllUsers = async (req, res) => {
+    try {
+        const usersResponse = await pool.query('SELECT * FROM users');
+        console.log('Users table data:', usersResponse.rows); // Log all rows in the users table
+        res.status(200).json(usersResponse.rows); // Send users data as JSON response
+    } catch (err) {
+        console.error('Error fetching users:', err.message);
+        res.status(500).json({ error: 'Failed to fetch users' });
+    }
+};
+
+module.exports = { registerUser, loginUser, fetchAllUsers };

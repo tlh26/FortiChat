@@ -1,26 +1,30 @@
-//Apps entry point
+// Entry point
+require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
-const { json, urlencoded } = require('body-parser');
-require('dotenv').config();
 
-// Import routers from other microservices
-const authRoutes = require('./AuthService/src/auth.router');
+// Microservices
+const authService = require('./AuthService/src/app');
+// Add other microservices as they are implemented
+// const anotherService = require('./AnotherService/src/app');
+// const yetAnotherService = require('./YetAnotherService/src/app');
 
 const app = express();
 
-// Middleware
+// Middleware for all services
 app.use(cors());
-app.use(json());
-app.use(urlencoded({ extended: true }));
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
-// Microservice routes
-app.use('/auth', authRoutes); // Authentication microservice
-
-// Health check endpoint
+// Health check for the main gateway
 app.get('/health', (req, res) => {
-    res.status(200).json({ status: 'Backend is UP & running', timestamp: new Date() });
+    res.status(200).json({ status: 'Main Gateway is UP & running', timestamp: new Date() });
 });
+
+// Register microservices with unique base paths
+app.use('/fortiChat', authService);
+// app.use('/another-service', anotherService);
+// app.use('/yet-another-service', yetAnotherService);
 
 // Global error handler
 app.use((err, req, res, next) => {
@@ -28,8 +32,21 @@ app.use((err, req, res, next) => {
     res.status(500).json({ error: 'Something went wrong!' });
 });
 
-// Start the server
-const PORT = process.env.PORT || 4000;
-app.listen(PORT, () => {
-    console.log(`Backend server running on port ${PORT}`);
-});
+// Export the app for testing
+module.exports = app;
+
+
+// Start the server (only if this is the main module)
+if (require.main === module) {
+    const PORT = process.env.PORT || 4000;
+    app.listen(PORT, () => {
+        console.log(`Main gateway running  at http://localhost:${PORT}`);
+    });
+}
+// // Start the server
+// const PORT = process.env.PORT || 4000;
+// console.log("Look at the App in Index.js" +app);
+
+// app.listen(PORT, () => {
+//     console.log(`Main gateway running  at http://localhost:${PORT}`);
+// });
